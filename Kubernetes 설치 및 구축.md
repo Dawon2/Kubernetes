@@ -214,3 +214,4 @@ ContainerCreating
 - https://www.cubrid.com/blog/3820603
 - https://nirsa.tistory.com/292
 - https://toridori.tistory.com/186
+- https://minkukjo.github.io/study/docs/kubernetes/15steps/03-kubernetes-architecture/

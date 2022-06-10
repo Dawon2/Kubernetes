@@ -12,12 +12,15 @@
 ## Kubernetes 환경 구축
 
 **구축 전!!**
-
+```
+* 설치버전 : Docker	18.06.2.ce
+            kubernetes	1.15.5
+```
 **1. 설치에 앞서 Master 서버 1대와 Worker 서버 2대를 만들고 시작한다.**
 
 **2. 각 서버 모두 Docker를 설치해야한다.**
 * 링크 : [Docker 설치][link]
-  
+  - 포스팅과 다른 Docker	18.06.2.ce 버전으로 설치해야함!
   [link]:https://github.com/Dawon2/Docker/blob/main/Docker%20%EC%84%A4%EC%B9%98%20%EB%B0%8F%20%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88%20%EC%82%AC%EC%9A%A9%EB%B2%95.md
 
 **3. 방화벽 포트 추가 설정**
@@ -74,11 +77,12 @@ EOF
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 EOF
+# sysctl --system
 ( 컨테이너의 네트워크 패킷이 호스트머신의 iptables 설정에 따라 제어되도록 하는 설정 )
 
 # swapoff -a
 # sed s/\\/dev\\/mapper\\/centos-swap/#\ \\/dev\\/mapper\\/centos-swap/g -i /etc/fstab
-( swat이 off 되어 있지 않으면 init 단계에서 오류 발생 )
+( swap이 off 되어 있지 않으면 init 단계에서 오류 발생 )
 
 # kubeadm init --pod-network-cidr=172.16.0.0/16
 ( 쿠버네티스 초기화 - pod에 172.16 대역 부여 )
@@ -178,7 +182,7 @@ coredns-576cbf47c7-bmns4         0/1     Pending   0          71s
 ( 대시보드 로그인 시 필요한 토큰 생성 -> 복사해놓기 )
 ```
 
-**- https://[서버 IP]:31055 로 접속!**
+**- https://[노드 IP]:31055 로 접속!**
 
 -> 위에서 복사한 토큰으로 대시보드 계정 로그인 확인!
 
@@ -193,8 +197,8 @@ Unable to connect to the server: x509: ~~
 -> sed -i 's/v1beta1/v1/g' calico.yaml
 
 One of the configured repositories failed (Kubernetes) - yum 에러
--> # gpgcheck=1
-   # repo_gpgcheck=1
+-> # gpgcheck=0
+   # repo_gpgcheck=0
 
 NotReady
 -> 위의 flannel loop 주석처리 후 실행
@@ -206,6 +210,34 @@ ContainerCreating
 대시보드 Pod - CrashLoopBackoff
 -> # kubectl get pods -o wide -n kube-system 명령어로 대시보드 파드의 node가 master가 아닌 worker노드로 설정되있는 경우
    # kubectl delete pods kubernetes-dashboard-7d75c474bb-7stzd --grace-period=0 --force -n kube-system 명령어로 파드 삭제 후 master 노드로 재배정
+
+[WARNING Hostname]:hostname "호스트명" could not be reached
+-> vi /etc/hosts 파일의 호스트네임 잘 들어갔는지 다시 확인 - # hostname
+
+[WARNING IsDockerSystemdCheck]: detected "cgroupfs"
+# cat <<EOF | sudo tee /etc/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+
+# systemctl daemon-reload
+# systemctl restart docker
+
+# docker info | grep -i cgroup       
+ Cgroup Driver: systemd
+
+리셋
+# kubeadm reset
+# systemctl restart kubelet
+
+토큰 재 확인
+# kubeadm token create --print-join-command
 
 ***
 ```

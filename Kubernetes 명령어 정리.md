@@ -55,6 +55,9 @@
 **kubectl exec -it [pod name] /bin/bash**
 > 파드 접속
 - bash 셸을 유지하여 접속
+- Pod 안에 컨테이너가 여러개일때 접속 방법
+  
+  ex ) kubectl exec -it [pod name] -c [container name] /bin/bash 
 
 
 **kubectl logs [pod name]**
